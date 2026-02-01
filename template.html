@@ -86,30 +86,95 @@ code {
 pre {
     background-color: #2d2d2d;
     border-radius: 5px;
-    padding: 1rem;
-    margin: 1.5rem 0;
+    padding: 0;
+    margin: 1rem 0;
     overflow-x: auto;
+    position: relative;
 }
 pre code {
     background-color: transparent;
     padding: 0;
+    margin: 0;
     color: #f8f8f2;
     font-size: 0.9rem;
     display: block;
+    padding-left: 3.5rem;
+    line-height: 1.5;
 }
-.sourceCode {
-    background-color: #2d2d2d;
-    border-radius: 5px;
-    padding: 1rem;
-    margin: 1.5rem 0;
-    overflow-x: auto;
-}
-.sourceCode pre {
+pre .line-numbers {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    background-color: #252526;
+    border-radius: 5px 0 0 5px;
+    padding: 0;
     margin: 0;
     font-family: "Consolas", "Monaco", "Courier New", monospace;
     font-size: 0.9rem;
     line-height: 1.5;
+    color: #858585;
+    text-align: right;
+    user-select: none;
+    z-index: 1;
+}
+pre .line-numbers > div {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    line-height: 1.5;
+    height: 1.5em;
+    margin: 0;
+}
+.sourceCode {
+    background-color: #2d2d2d;
+    border-radius: 5px;
+    padding: 0;
+    margin: 1rem 0;
+    overflow-x: auto;
+    position: relative;
+}
+.sourceCode .line-numbers {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    background-color: #252526;
+    border-radius: 5px 0 0 5px;
+    padding: 0;
+    margin: 0;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #858585;
+    text-align: right;
+    user-select: none;
+    z-index: 1;
+}
+.sourceCode .line-numbers > div {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    line-height: 1.5;
+    height: 1.5em;
+    margin: 0;
+}
+.sourceCode pre {
+    margin: 0;
+    padding: 0;
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
     color: #f8f8f2;
+    padding-left: 3.5rem;
+}
+.sourceCode code {
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    line-height: 1.5;
 }
 .sourceCode code {
     background-color: transparent;
@@ -370,6 +435,90 @@ document.addEventListener('DOMContentLoaded', function() {
             closeModal();
         }
     });
+    
+    // Add line numbers to code blocks
+    function addLineNumbers() {
+        // Get all potential code blocks
+        const allPres = document.querySelectorAll('pre');
+        // Only select div elements with class sourceCode (not pre elements)
+        const allSourceCodes = document.querySelectorAll('div.sourceCode');
+        
+        // Filter to only top-level containers
+        const topLevelBlocks = [];
+        
+        // Add standalone pre elements (not inside a .sourceCode div container)
+        allPres.forEach(function(pre) {
+            // Check if parent is a div with class sourceCode (not the pre itself)
+            const parent = pre.parentElement;
+            if (!parent || !(parent.tagName === 'DIV' && parent.classList.contains('sourceCode'))) {
+                topLevelBlocks.push(pre);
+            }
+        });
+        
+        // Add all .sourceCode div containers (not pre elements with that class)
+        allSourceCodes.forEach(function(sourceCode) {
+            // Only process div elements with class sourceCode
+            if (sourceCode.tagName === 'DIV' && sourceCode.classList.contains('sourceCode')) {
+                topLevelBlocks.push(sourceCode);
+            }
+        });
+        
+        topLevelBlocks.forEach(function(block) {
+            // Skip if line numbers already added
+            if (block.querySelector('.line-numbers') || block.dataset.lineNumbersAdded) {
+                return;
+            }
+            
+            // Mark as processed immediately to prevent duplicates
+            block.dataset.lineNumbersAdded = 'true';
+            
+            let codeElement;
+            if (block.classList.contains('sourceCode')) {
+                codeElement = block.querySelector('pre code') || block.querySelector('code');
+            } else {
+                codeElement = block.querySelector('code') || block;
+            }
+            
+            if (!codeElement) return;
+            
+            // Get text content
+            let text = codeElement.textContent || codeElement.innerText || '';
+            
+            // Remove only trailing newline if present (common in code blocks)
+            if (text.endsWith('\n')) {
+                text = text.slice(0, -1);
+            }
+            
+            // Split by newlines
+            const lines = text.split('\n');
+            const lineCount = lines.length;
+            
+            if (lineCount === 0) return;
+            
+            // Create line numbers element
+            const lineNumbers = document.createElement('div');
+            lineNumbers.className = 'line-numbers';
+            
+            // Generate line numbers - match the actual number of lines in the text
+            for (let i = 1; i <= lineCount; i++) {
+                const lineNumber = document.createElement('div');
+                lineNumber.textContent = i;
+                lineNumbers.appendChild(lineNumber);
+            }
+            
+            block.insertBefore(lineNumbers, block.firstChild);
+            
+            // Double-check: if somehow line numbers were added twice, remove duplicates
+            const existingNumbers = block.querySelectorAll('.line-numbers');
+            if (existingNumbers.length > 1) {
+                for (let i = 1; i < existingNumbers.length; i++) {
+                    existingNumbers[i].remove();
+                }
+            }
+        });
+    }
+    
+    addLineNumbers();
 });
 </script>
 $for(scripts)$
