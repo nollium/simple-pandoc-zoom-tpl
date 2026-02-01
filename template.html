@@ -280,10 +280,19 @@ hr {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
 }
-.image-modal img {
+.image-modal .image-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-width: 90%;
     max-height: 90%;
+}
+.image-modal img {
+    max-width: 100%;
+    max-height: calc(90vh - 80px);
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -304,6 +313,45 @@ hr {
 }
 .image-modal .close:hover {
     opacity: 1;
+}
+.image-modal .title {
+    margin-top: 1.25rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    max-width: 100%;
+    line-height: 1.5;
+    font-weight: 300;
+    letter-spacing: 0.3px;
+    z-index: 1002;
+    opacity: 0;
+    animation: fadeInUp 0.4s ease 0.2s forwards;
+    transition: all 0.3s ease;
+}
+.image-modal .title:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -400,12 +448,16 @@ $include-after$
 $endfor$
 <div class="image-modal" id="imageModal">
     <span class="close">&times;</span>
-    <img id="modalImage" src="" alt="">
+    <div class="image-container">
+        <img id="modalImage" src="" alt="">
+        <div class="title" id="modalTitle"></div>
+    </div>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
     const closeBtn = document.querySelector('.close');
     const images = document.querySelectorAll('figure img');
     
@@ -414,6 +466,30 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.classList.add('active');
             modalImg.src = this.src;
             modalImg.alt = this.alt;
+            
+            // Get title from figcaption, title attribute, or alt text
+            const figure = this.closest('figure');
+            let titleText = '';
+            if (figure) {
+                const figcaption = figure.querySelector('figcaption');
+                if (figcaption) {
+                    titleText = figcaption.textContent.trim();
+                }
+            }
+            if (!titleText && this.title) {
+                titleText = this.title;
+            }
+            if (!titleText && this.alt) {
+                titleText = this.alt;
+            }
+            
+            if (titleText) {
+                modalTitle.textContent = titleText;
+                modalTitle.style.display = 'block';
+            } else {
+                modalTitle.style.display = 'none';
+            }
+            
             document.body.style.overflow = 'hidden';
         });
     });
@@ -421,10 +497,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal() {
         modal.classList.remove('active');
         document.body.style.overflow = '';
+        modalTitle.textContent = '';
     }
     
     closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', function(e) {
+        // Close only if clicking directly on the modal background (not on image container or its children)
         if (e.target === modal) {
             closeModal();
         }
