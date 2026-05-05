@@ -82,8 +82,10 @@ code {
     border-radius: 3px;
     font-size: 0.9em;
     color: #e74c3c;
-    white-space: nowrap;
-    word-break: keep-all;
+}
+p > code {
+    overflow-wrap: break-word;
+    word-break: break-all;
 }
 pre {
     background-color: #2d2d2d;
